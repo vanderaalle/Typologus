@@ -24,7 +24,7 @@ Every sound object receives a unique position (x, y, z) in the space, allowing d
 
 - Valle, A. (2015). Towards a Semiotics of the Audible. *Signata. Annales des sémiotiques / Annals of Semiotics*, 6, pp. 65–89. https://doi.org/10.4000/signata.1063
 
-- Lombardo, V. & Valle, A. (2007). *Audio e Multimedia* (4th ed.). Apogeo, Milan.
+- Lombardo, V. & Valle, A. (2024). *Audio e Multimedia* (5th ed.). Apogeo, Milan.
 
 - Lombardo, V. & Valle, A. (2014). Typological space for sound objects. [internal reference]
 
@@ -152,4 +152,4 @@ If you use Typologus in your research, please cite:
 
 > Valle, A. (2015). Towards a Semiotics of the Audible. *Signata*, 6, pp. 65–89. https://doi.org/10.4000/signata.1063
 
-> Lombardo, V. & Valle, A. (2007). *Audio e Multimedia*. Apogeo.
+> Lombardo, V. & Valle, A. (2024). *Audio e Multimedia* (5th ed.). Apogeo.

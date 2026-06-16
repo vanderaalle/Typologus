@@ -1,0 +1,26 @@
+# TYPOLOGICAL SPACE — Annotation Template
+# Lombardo & Valle 2014
+#
+# FIELDS:
+#   id           — integer, unique identifier
+#   name         — string, "descriptive name / file reference"
+#   x            — float [-2.5 .. +2.5]  profile/sustain axis
+#                    sustained (neg) | anamorph (0) | iterative (pos)
+#                    profile sequence: Amorph | Eumorph | Anamorph | Eumorph | Amorph
+#   y            — float [0 .. 2.0]  calibre (mass) axis
+#                    0 = pitched/narrow mass,  2 = wide/noisy mass
+#   z            — float [0 .. 3.0]  variation axis
+#                    0 = no variation,  3 = maximum variation
+#   profile      — one of: anamorph | eumorph | amorph | mixed
+#   sustain      — one of: sustained | impulsive | iterative
+#   mass         — one of: pitched mass | fixed mass | varied mass | variable mass
+#   variation    — one of: no variation | very low variation | low variation |
+#                           medium variation | medium-high variation | high variation
+#   profile_full — free text, e.g. "eumorph, sustained" or "amorph/eumorph, iterative"
+#
+id,name,x,y,z,profile,sustain,mass,variation,profile_full
+1,,0.0,0.0,0.0,,,,, 
+2,,0.0,0.0,0.0,,,,,
+3,,0.0,0.0,0.0,,,,,
+4,,0.0,0.0,0.0,,,,,
+5,,0.0,0.0,0.0,,,,,

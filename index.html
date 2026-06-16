@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typological Space Visualizer — Varèse Poème électronique</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0f14; color: #e0e0e0; font-family: 'Georgia', serif; overflow: hidden; }
+  #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+  #ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* Top bar */
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 6px 20px 5px;
+    background: linear-gradient(to bottom, rgba(13,15,20,0.95), transparent);
+    pointer-events: auto;
+  }
+  #topbar h1 { font-size: 1.05rem; letter-spacing: 0.12em; color: #c9a96e; font-weight: normal; text-transform: uppercase; }
+  #topbar h2 { font-size: 0.72rem; letter-spacing: 0.08em; color: #666; margin-top: 1px; font-weight: normal; }
+
+  /* Sidebar */
+  #sidebar {
+    position: absolute; top: 40px; left: 0;
+    width: 270px; max-height: calc(100vh - 44px);
+    overflow-y: auto; padding: 14px;
+    background: rgba(13,15,20,0.88);
+    border-right: 1px solid #1e2230;
+    pointer-events: auto;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
+
+  .ctrl-section { margin-bottom: 16px; }
+  .ctrl-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 6px; display: block; }
+  
+  /* File input */
+  #file-drop {
+    border: 1px dashed #2a3050; border-radius: 4px;
+    padding: 10px; text-align: center; cursor: pointer;
+    font-size: 0.72rem; color: #556; transition: border-color 0.2s;
+  }
+  #file-drop:hover { border-color: #c9a96e; color: #c9a96e; }
+  #file-input { display: none; }
+
+  /* Filter chips */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    padding: 3px 8px; border-radius: 12px; font-size: 0.65rem;
+    cursor: pointer; border: 1px solid #2a2d3a; color: #888;
+    transition: all 0.15s; user-select: none;
+  }
+  .chip.active { border-color: var(--chip-color, #c9a96e); color: var(--chip-color, #c9a96e); background: rgba(201,169,110,0.08); }
+  
+  /* Search */
+  #search {
+    width: 100%; background: #111420; border: 1px solid #1e2230;
+    color: #ccc; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem;
+    outline: none;
+  }
+  #search:focus { border-color: #c9a96e; }
+
+  /* Point size slider */
+  input[type=range] { width: 100%; accent-color: #c9a96e; }
+
+  /* Legend */
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 0.68rem; color: #888; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Axis labels toggle */
+  #btn-axes, #btn-reset, #btn-labels {
+    background: #111420; border: 1px solid #1e2230; color: #aaa;
+    padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+    margin-right: 4px; margin-bottom: 4px; transition: all 0.15s;
+  }
+  #btn-axes:hover, #btn-reset:hover, #btn-labels:hover { border-color: #c9a96e; color: #c9a96e; }
+  #btn-axes.active, #btn-labels.active { border-color: #c9a96e; color: #c9a96e; background: rgba(201,169,110,0.08); }
+
+  /* Info panel */
+  #info-panel {
+    position: absolute; bottom: 20px; left: 0; right: 0;
+    margin: 0 auto; max-width: 420px; width: calc(100% - 300px); margin-left: 290px;
+    background: rgba(13,15,20,0.94); border: 1px solid #1e2230;
+    border-radius: 6px; padding: 14px 16px;
+    pointer-events: auto; display: none;
+    backdrop-filter: blur(8px);
+  }
+  #info-panel h3 { font-size: 0.95rem; color: #c9a96e; margin-bottom: 8px; font-weight: normal; }
+  #info-panel .coords { font-family: monospace; font-size: 0.78rem; color: #6af; margin-bottom: 8px; }
+  #info-panel .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  #info-panel .tag { background: #1e2230; padding: 2px 7px; border-radius: 10px; font-size: 0.65rem; color: #aaa; }
+  #info-close { position: absolute; top: 8px; right: 10px; cursor: pointer; color: #555; font-size: 0.9rem; }
+  #info-close:hover { color: #c9a96e; }
+
+  /* Stats bar */
+  #stats { position: absolute; bottom: 14px; right: 14px; font-size: 0.65rem; color: #334; pointer-events: none; text-align: right; }
+
+  /* Instructions */
+  #hint { position: absolute; bottom: 14px; left: 290px; font-size: 0.65rem; color: #334; pointer-events: none; }
+
+  /* Count badge */
+  #count-badge { display: inline-block; background: #1a1d2a; border-radius: 10px; padding: 1px 7px; font-size: 0.65rem; color: #666; margin-left: 6px; }
+
+  /* Grid overlay */
+  #grid-overlay { display: none; }
+</style>
+</head>
+<body>
+<div id="canvas-container"></div>
+<div id="ui">
+  <div id="topbar">
+    <h1>Typological Space &mdash; Varèse: <em>Poème électronique</em></h1>
+    <h2>Profile / Sustain &nbsp;·&nbsp; Calibre (Mass) &nbsp;·&nbsp; Variation &nbsp;&nbsp;|&nbsp;&nbsp; Lombardo & Valle 2014</h2>
+  </div>
+
+  <div id="sidebar">
+    <!-- Load data -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Load data (JSON / CSV)</span>
+      <div id="file-drop" onclick="document.getElementById('file-input').click()">
+        Drop file or click to load<br><span style="color:#334;font-size:0.62rem">JSON array or CSV</span>
+      </div>
+      <input type="file" id="file-input" accept=".json,.csv">
+    </div>
+
+    <!-- Search -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Search <span id="count-badge">60</span></span>
+      <input type="text" id="search" placeholder="name, mass, variation…">
+    </div>
+
+    <!-- Profile filter -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Profile</span>
+      <div class="chip-group" id="filter-profile">
+        <div class="chip active" style="--chip-color:#6ab4e8" data-val="anamorph">Anamorph</div>
+        <div class="chip active" style="--chip-color:#e8b86a" data-val="eumorph">Eumorph</div>
+        <div class="chip active" style="--chip-color:#e86aa8" data-val="amorph">Amorph</div>
+        <div class="chip active" style="--chip-color:#a8e86a" data-val="mixed">Mixed</div>
+      </div>
+    </div>
+
+    <!-- Sustain filter -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Sustain</span>
+      <div class="chip-group" id="filter-sustain">
+        <div class="chip active" style="--chip-color:#aaa" data-val="sustained">Sustained</div>
+        <div class="chip active" style="--chip-color:#aaa" data-val="impulsive">Impulsive</div>
+        <div class="chip active" style="--chip-color:#aaa" data-val="iterative">Iterative</div>
+      </div>
+    </div>
+
+    <!-- Point size -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Point size</span>
+      <input type="range" id="pt-size" min="3" max="20" value="7" step="0.5">
+    </div>
+
+    <!-- Display -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Display</span>
+      <button id="btn-labels" class="active">Labels</button>
+      <button id="btn-axes">Axis grid</button>
+      <button id="btn-reset">Reset view</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Profile colour</span>
+      <div class="legend-item"><div class="legend-dot" style="background:#6ab4e8"></div> Anamorph (centre, impulsive)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e8b86a"></div> Eumorph (mid, sustained/iterative)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e86aa8"></div> Amorph (extremes)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a8e86a"></div> Mixed</div>
+    </div>
+    <div class="ctrl-section">
+      <span class="ctrl-label">Sustain shape</span>
+      <div class="legend-item"><span style="font-size:1rem;line-height:1">●</span> Sustained</div>
+      <div class="legend-item"><span style="font-size:1rem;line-height:1">▲</span> Impulsive</div>
+      <div class="legend-item"><span style="font-size:1rem;line-height:1">◆</span> Iterative</div>
+    </div>
+
+    <!-- Export -->
+    <div class="ctrl-section">
+      <span class="ctrl-label">Export</span>
+      <button id="btn-axes" onclick="exportJSON()" style="margin:0">Export JSON</button>
+      <button id="btn-reset" onclick="exportCSV()" style="margin:0;margin-left:4px">Export CSV</button>
+    </div>
+  </div>
+
+  <div id="info-panel">
+    <span id="info-close" onclick="closeInfo()">✕</span>
+    <h3 id="info-name"></h3>
+    <div class="coords" id="info-coords"></div>
+    <div class="tags" id="info-tags"></div>
+  </div>
+
+  <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan &nbsp;·&nbsp; Click point for details</div>
+  <div id="stats" id="stats-bar"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let DATA = [
+  {
+    "id": 1,
+    "name": "Bourdon /bell-lowbell",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 2.5,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "variable mass",
+    "variation": "medium-high variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 2,
+    "name": "Perc./wblock-1",
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.5,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 3,
+    "name": "Perc./lowblock",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.5,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 4,
+    "name": "Oewoep/oscweep-1",
+    "x": -1.75,
+    "y": 0.5,
+    "z": 1.5,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 5,
+    "name": "Perc./wblock-2",
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.3,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 6,
+    "name": "Tsoewiet/oscweep-2",
+    "x": -1.75,
+    "y": 0.5,
+    "z": 1.5,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 7,
+    "name": "Perc./multiblock",
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.7,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 8,
+    "name": "Perc./hiblocks",
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.4,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 9,
+    "name": "Ebtuplets",
+    "x": 1.0,
+    "y": 0.5,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 10,
+    "name": "Tram/hisynSwell",
+    "x": -2.0,
+    "y": 0.2,
+    "z": 0.0,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 11,
+    "name": "Shooting star/grain-Ab1/2",
+    "x": -1.0,
+    "y": 1.2,
+    "z": 0.0,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "fixed mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 12,
+    "name": "Shooting star(?)/osclohiGb+oschi",
+    "x": -2.0,
+    "y": 1.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 13,
+    "name": "Pup-neus/loblipE-B",
+    "x": 0.2,
+    "y": 0.0,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 14,
+    "name": "Tjr-tjr/metalshake-1",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 15,
+    "name": "Tjr-tjr/?(hihat)",
+    "x": 0.0,
+    "y": 1.5,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "fixed mass",
+    "variation": "no variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 16,
+    "name": "Tjr-tjr/metalshake-2",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 17,
+    "name": "Tjr-tjr/metalshake-3",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 18,
+    "name": "Pup-neus/loblipE-B-E",
+    "x": 0.2,
+    "y": 0.0,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 19,
+    "name": "Pup-neus/loblipB-E-E",
+    "x": 0.2,
+    "y": 0.0,
+    "z": 0.1,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "anamorph, impulsive"
+  },
+  {
+    "id": 20,
+    "name": "Tjr/metalshake-4",
+    "x": 1.0,
+    "y": 1.0,
+    "z": 0.0,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 21,
+    "name": "?/synducks",
+    "x": 0.5,
+    "y": 0.5,
+    "z": 0.6,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "eumorph/anamorph, impulsive/sustained"
+  },
+  {
+    "id": 22,
+    "name": "Wauw/slideverb(src)",
+    "x": -2.0,
+    "y": 0.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 23,
+    "name": "Wauw/slideverb(rev)",
+    "x": -2.0,
+    "y": 0.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 24,
+    "name": "Prrt/Aboscshake",
+    "x": 1.0,
+    "y": 0.8,
+    "z": 0.2,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 25,
+    "name": "Prrt/Lowosc+shake-1",
+    "x": 1.0,
+    "y": 0.7,
+    "z": 0.3,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 26,
+    "name": "Prrt/LowDoscshake",
+    "x": 1.0,
+    "y": 0.8,
+    "z": 0.1,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 27,
+    "name": "Prrt/Gboscshake",
+    "x": 1.0,
+    "y": 0.7,
+    "z": 0.1,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 28,
+    "name": "Prrt/Lowosc+shake-2",
+    "x": 1.0,
+    "y": 0.8,
+    "z": 0.3,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 29,
+    "name": "Zaag [Saw]/4hits-pan",
+    "x": 1.5,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "mixed",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph/amorph, iterative"
+  },
+  {
+    "id": 30,
+    "name": "Zaag [Saw]/4hits-pan",
+    "x": 1.5,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "mixed",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph/amorph, iterative"
+  },
+  {
+    "id": 31,
+    "name": "Tja-tja/shakes-pan (track n.2)",
+    "x": 1.0,
+    "y": 1.8,
+    "z": 1.5,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 32,
+    "name": "Tja-tja/shakes-pan (track n.3)",
+    "x": 1.0,
+    "y": 1.8,
+    "z": 1.5,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 33,
+    "name": "Tjang-wiet/machinesweep",
+    "x": -1.0,
+    "y": 1.8,
+    "z": 2.5,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "variable mass",
+    "variation": "high variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 34,
+    "name": "Pup/3squeekes",
+    "x": -0.5,
+    "y": 0.5,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/anamorph, sustained/impulsive"
+  },
+  {
+    "id": 35,
+    "name": "Pup/4bassoonnotes",
+    "x": -0.5,
+    "y": 0.3,
+    "z": 0.2,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/anamorph, sustained/impulsive"
+  },
+  {
+    "id": 36,
+    "name": "Wauw/stereosigh(src)",
+    "x": -1.8,
+    "y": 0.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 37,
+    "name": "Wauw/stereosigh(rev)",
+    "x": -1.8,
+    "y": 0.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 38,
+    "name": "Neus/bassoonolo-1",
+    "x": -0.5,
+    "y": 0.3,
+    "z": 0.5,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/anamorph, sustained/impulsive"
+  },
+  {
+    "id": 39,
+    "name": "Neus/bassoonolo-2",
+    "x": -0.5,
+    "y": 0.3,
+    "z": 0.5,
+    "profile": "anamorph",
+    "sustain": "impulsive",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/anamorph, sustained/impulsive"
+  },
+  {
+    "id": 40,
+    "name": "Wiep-wiep/stereoguls-L",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 1.7,
+    "profile": "amorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, iterative"
+  },
+  {
+    "id": 41,
+    "name": "Wiep-wiep/stereoguls-R",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 1.7,
+    "profile": "amorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, iterative"
+  },
+  {
+    "id": 42,
+    "name": "Wiep-wiep/highgulls-a",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 1.2,
+    "profile": "amorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, iterative"
+  },
+  {
+    "id": 43,
+    "name": "Wiep-wiep/highgulls-b",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 1.5,
+    "profile": "amorph",
+    "sustain": "iterative",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, iterative"
+  },
+  {
+    "id": 44,
+    "name": "Timpany/timpani",
+    "x": 1.0,
+    "y": 1.0,
+    "z": 1.0,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "pitched/fixed mass",
+    "variation": "low variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 45,
+    "name": "Tju-tja/Tju-tja",
+    "x": -1.7,
+    "y": 0.8,
+    "z": 0.7,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 46,
+    "name": "Tjukketjuk/Tjukketjuk",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "amorph",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "no variation",
+    "profile_full": "amorph, iterative"
+  },
+  {
+    "id": 47,
+    "name": "Tja-tju/Tja-tju",
+    "x": -1.7,
+    "y": 0.8,
+    "z": 0.7,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 48,
+    "name": "Perc./Perc(a)",
+    "x": 1.0,
+    "y": 1.5,
+    "z": 0.8,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "medium variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 49,
+    "name": "Whistle finger",
+    "x": 2.0,
+    "y": 0.6,
+    "z": 1.5,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "varied mass",
+    "variation": "medium variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 50,
+    "name": "Tja-tju/Tja-tju",
+    "x": -1.7,
+    "y": 0.8,
+    "z": 0.9,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "very low variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 51,
+    "name": "Perc./Perc(b)",
+    "x": 1.0,
+    "y": 1.5,
+    "z": 0.7,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "low variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 52,
+    "name": "Way-way/way-way",
+    "x": -0.5,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "anamorph",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "low variation",
+    "profile_full": "eumorph/anamorph, sustained/iterative"
+  },
+  {
+    "id": 53,
+    "name": "Oempang/oempang",
+    "x": 1.3,
+    "y": 1.5,
+    "z": 0.8,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "fixed mass",
+    "variation": "low variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 54,
+    "name": "Pss-pss/pss-pss",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 0.5,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "fixed mass",
+    "variation": "no variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 55,
+    "name": "Parabool/parabool(a)(b)",
+    "x": -2.0,
+    "y": 0.5,
+    "z": 1.5,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "varied mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 56,
+    "name": "Parabool/parabool",
+    "x": -2.0,
+    "y": 0.4,
+    "z": 1.3,
+    "profile": "amorph",
+    "sustain": "sustained",
+    "mass": "varied mass",
+    "variation": "low variation",
+    "profile_full": "amorph, sustained"
+  },
+  {
+    "id": 57,
+    "name": "Timpany/timpani",
+    "x": 1.0,
+    "y": 1.0,
+    "z": 1.0,
+    "profile": "eumorph",
+    "sustain": "iterative",
+    "mass": "pitched/fixed mass",
+    "variation": "low variation",
+    "profile_full": "eumorph, iterative"
+  },
+  {
+    "id": 58,
+    "name": "Tok-tok/Tok-tok",
+    "x": 1.7,
+    "y": 0.3,
+    "z": 0.2,
+    "profile": "mixed",
+    "sustain": "iterative",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/amorph, iterative"
+  },
+  {
+    "id": 59,
+    "name": "Bourdon/Gong",
+    "x": -1.0,
+    "y": 1.5,
+    "z": 2.3,
+    "profile": "eumorph",
+    "sustain": "sustained",
+    "mass": "variable mass",
+    "variation": "medium-high variation",
+    "profile_full": "eumorph, sustained"
+  },
+  {
+    "id": 60,
+    "name": "Parameter/Breed(a)",
+    "x": -1.5,
+    "y": 0.5,
+    "z": 0.0,
+    "profile": "mixed",
+    "sustain": "sustained",
+    "mass": "pitched mass",
+    "variation": "no variation",
+    "profile_full": "eumorph/amorph, sustained"
+  }
+];
+
+// ── COLOUR / SHAPE MAP ───────────────────────────────────────────────────────
+// Colour reflects position on X axis:
+// anamorph = centre (impulsive, x≈0) → cyan
+// eumorph  = mid (sustained/iterative, |x|≈1) → amber
+// amorph   = extremes (|x|≈2) → magenta
+// mixed    = transitional → green
+const PROFILE_COLOR = {
+  anamorph: 0x6ab4e8,
+  eumorph:  0xe8b86a,
+  amorph:   0xe86aa8,
+  mixed:    0xa8e86a,
+};
+const PROFILE_COLOR_HEX = {
+  anamorph: '#6ab4e8',
+  eumorph:  '#e8b86a',
+  amorph:   '#e86aa8',
+  mixed:    '#a8e86a',
+};
+
+// Shape: sphere=sustained, cone=impulsive, octahedron=iterative
+function makeGeom(sustain, size) {
+  const s = size * 0.012;
+  if (sustain === 'impulsive') return new THREE.ConeGeometry(s, s*2, 8);
+  if (sustain === 'iterative') return new THREE.OctahedronGeometry(s*1.1);
+  return new THREE.SphereGeometry(s, 12, 8);
+}
+
+// ── THREE SCENE ───────────────────────────────────────────────────────────────
+const W = window.innerWidth, H = window.innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(W, H);
+renderer.setClearColor(0x0d0f14, 1);
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100);
+camera.position.set(4, 3, 6);
+camera.lookAt(0, 1, 1.5);
+
+// Lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirL = new THREE.DirectionalLight(0xffffff, 0.8);
+dirL.position.set(5, 8, 5);
+scene.add(dirL);
+
+// ── ORBIT CONTROLS (minimal, built-in) ───────────────────────────────────────
+let isDown = false, isRight = false;
+let lastX = 0, lastY = 0;
+let spherical = { theta: 0.5, phi: 1.4, r: 8 };
+let target = new THREE.Vector3(0, -1.08, 1.0);
+
+function updateCamera() {
+  const x = spherical.r * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+  const y = spherical.r * Math.cos(spherical.phi);
+  const z = spherical.r * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+  camera.position.set(target.x + x, target.y + y, target.z + z);
+  camera.lookAt(target);
+}
+
+const cvs = renderer.domElement;
+cvs.addEventListener('mousedown', e => {
+  isDown = true; isRight = e.button === 2;
+  lastX = e.clientX; lastY = e.clientY;
+});
+cvs.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('mouseup', () => isDown = false);
+window.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  if (isRight) {
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    camera.getWorldDirection(right); right.cross(camera.up).normalize();
+    up.copy(camera.up);
+    target.addScaledVector(right, -dx * 0.006);
+    target.addScaledVector(up, dy * 0.006);
+  } else {
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + dy * 0.005));
+  }
+  updateCamera();
+});
+cvs.addEventListener('wheel', e => {
+  spherical.r = Math.max(1.5, Math.min(25, spherical.r * (1 + e.deltaY * 0.001)));
+  updateCamera();
+}, { passive: true });
+
+// Touch support
+let touches = {};
+cvs.addEventListener('touchstart', e => {
+  [...e.changedTouches].forEach(t => touches[t.identifier] = { x: t.clientX, y: t.clientY });
+});
+cvs.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    const t = e.touches[0];
+    const prev = touches[t.identifier];
+    if (prev) {
+      const dx = t.clientX - prev.x, dy = t.clientY - prev.y;
+      spherical.theta -= dx * 0.007;
+      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + dy * 0.007));
+      updateCamera();
+    }
+    touches[t.identifier] = { x: t.clientX, y: t.clientY };
+  }
+}, { passive: false });
+
+// ── COORDINATE MAPPING ────────────────────────────────────────────────────────
+// X axis: profile/sustain [-2.5 .. 2.5]  → scene X scaled
+// Y axis: calibre [0 .. 2.0]             → scene Y (flipped: 0=top, 2=bottom in theory; keep natural)
+// Z axis: variation [0 .. 3.0]           → scene Z
+function toScene(x, y, z) {
+  return new THREE.Vector3(-x * 1.0, -y * 1.2, z * 0.8);
+}
+
+// ── AXIS / GRID ───────────────────────────────────────────────────────────────
+const axisGroup = new THREE.Group();
+scene.add(axisGroup);
+
+function buildAxes() {
+  axisGroup.clear();
+
+  const mat = c => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.35 });
+
+  // Main axes
+  function line(from, to, color) {
+    const g = new THREE.BufferGeometry().setFromPoints([from, to]);
+    axisGroup.add(new THREE.Line(g, mat(color)));
+  }
+
+  // X axis (profile) [-2.5 .. 2.5]
+  line(toScene(-2.5,0,0), toScene(2.5,0,0), 0xe8b86a);
+  // Y axis (calibre) [0 .. 2]
+  line(toScene(0,0,0), toScene(0,2,0), 0x6ab4e8);
+  // Z axis (variation) [0 .. 3]
+  line(toScene(0,0,0), toScene(0,0,3), 0xa8e86a);
+
+  // Tick marks on X
+  for (let x = -2; x <= 2; x++) {
+    line(toScene(x,-0.05,0), toScene(x,0.05,0), 0xe8b86a);
+  }
+  // Ticks on Y (calibre)
+  for (let y = 0.5; y <= 2; y += 0.5) {
+    line(toScene(-0.05,y,0), toScene(0.05,y,0), 0x6ab4e8);
+  }
+  // Ticks on Z (variation)
+  for (let z = 0.5; z <= 3; z += 0.5) {
+    line(toScene(0,-0.05,z), toScene(0,0.05,z), 0xa8e86a);
+  }
+
+  // Reference planes (faint grid)
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x1e2230, transparent: true, opacity: 0.5 });
+  function gridLine(from, to) {
+    const g = new THREE.BufferGeometry().setFromPoints([from, to]);
+    axisGroup.add(new THREE.Line(g, gridMat));
+  }
+  // XZ floor at y=0
+  for (let x = -2.5; x <= 2.5; x += 0.5) gridLine(toScene(x,0,0), toScene(x,0,3));
+  for (let z = 0; z <= 3; z += 0.5) gridLine(toScene(-2.5,0,z), toScene(2.5,0,z));
+}
+buildAxes();
+
+// ── SPRITE LABELS ─────────────────────────────────────────────────────────────
+const labelGroup = new THREE.Group();
+scene.add(labelGroup);
+let showLabels = true;
+
+function makeLabel(text, pos, color = '#c9a96e') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 48;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,256,48);
+  ctx.font = '18px Georgia, serif';
+  ctx.fillStyle = color;
+  ctx.fillText(text, 4, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.2, 0.23, 1);
+  sprite.position.copy(pos).add(new THREE.Vector3(0.08, 0.12, 0));
+  return sprite;
+}
+
+// Axis name labels
+function buildAxisLabels() {
+  const axLabelGroup = new THREE.Group();
+  axLabelGroup.name = 'axlabels';
+  scene.add(axLabelGroup);
+
+  function axLabel(text, pos, color) {
+    axLabelGroup.add(makeLabel(text, toScene(...pos), color));
+  }
+  axLabel('Profile / Sustain', [-2.6, 0, 0], '#e8b86a');
+  axLabel('Amorph', [2.6, 0.05, 0], '#e86aa8');
+  axLabel('Eumorph', [1.1, 0.05, 0], '#e8b86a');
+  axLabel('Anamorph', [-0.15, 0.05, 0], '#6ab4e8');
+  axLabel('Eumorph', [-1.1, 0.05, 0], '#e8b86a');
+  axLabel('Amorph', [-2.1, 0.05, 0], '#e86aa8');
+  axLabel('sustained →', [1.5, -0.25, 0], '#555');
+  axLabel('← iterative', [-2.5, -0.25, 0], '#555');
+  axLabel('impulsive', [-0.2, -0.25, 0], '#555');
+  axLabel('Calibre ↓', [0, 2.05, 0], '#6ab4e8');
+  axLabel('Variation →', [0, 0, 3.1], '#a8e86a');
+}
+buildAxisLabels();
+
+// ── POINTS ────────────────────────────────────────────────────────────────────
+let pointMeshes = [];
+let pointLabels = [];
+let activeFilters = { profile: new Set(['eumorph','anamorph','amorph','mixed']), sustain: new Set(['sustained','impulsive','iterative']) };
+let searchTerm = '';
+let ptSize = 7;
+
+function clearPoints() {
+  pointMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  pointLabels.forEach(s => labelGroup.remove(s));
+  pointMeshes = []; pointLabels = [];
+}
+
+function buildPoints() {
+  clearPoints();
+  const visible = DATA.filter(o => {
+    const profileOk = activeFilters.profile.has(o.profile);
+    const sustainOk = activeFilters.sustain.has(o.sustain);
+    const searchOk = !searchTerm || o.name.toLowerCase().includes(searchTerm) ||
+      o.profile_full.toLowerCase().includes(searchTerm) ||
+      o.mass.toLowerCase().includes(searchTerm) ||
+      o.variation.toLowerCase().includes(searchTerm);
+    return profileOk && sustainOk && searchOk;
+  });
+
+  document.getElementById('count-badge').textContent = visible.length + ' / ' + DATA.length;
+
+  visible.forEach(o => {
+    const pos = toScene(o.x, o.y, o.z);
+    const color = PROFILE_COLOR[o.profile] || 0xffffff;
+    const geom = makeGeom(o.sustain, ptSize);
+    const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25, shininess: 60 });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.copy(pos);
+    mesh.userData = o;
+    scene.add(mesh);
+    pointMeshes.push(mesh);
+
+    if (showLabels) {
+      const lbl = makeLabel(`${o.id}. ${o.name.split('/')[0]}`, pos, PROFILE_COLOR_HEX[o.profile] || '#ccc');
+      labelGroup.add(lbl);
+      pointLabels.push(lbl);
+    }
+  });
+}
+
+buildPoints();
+
+// ── RAYCASTING ────────────────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points = { threshold: 0.1 };
+const mouse = new THREE.Vector2();
+let clickedMesh = null;
+
+cvs.addEventListener('click', e => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(pointMeshes);
+  if (hits.length > 0) {
+    const o = hits[0].object.userData;
+    showInfo(o);
+    if (clickedMesh) clickedMesh.material.emissiveIntensity = 0.25;
+    clickedMesh = hits[0].object;
+    clickedMesh.material.emissiveIntensity = 0.9;
+  }
+});
+
+function showInfo(o) {
+  const panel = document.getElementById('info-panel');
+  document.getElementById('info-name').textContent = `${o.id}. ${o.name}`;
+  document.getElementById('info-coords').textContent =
+    `(profile: ${o.x},  calibre: ${o.y},  variation: ${o.z})`;
+  const tags = document.getElementById('info-tags');
+  tags.innerHTML = '';
+  [o.profile_full, o.mass, o.variation].forEach(t => {
+    const d = document.createElement('div'); d.className = 'tag'; d.textContent = t;
+    tags.appendChild(d);
+  });
+  panel.style.display = 'block';
+}
+
+function closeInfo() {
+  document.getElementById('info-panel').style.display = 'none';
+  if (clickedMesh) { clickedMesh.material.emissiveIntensity = 0.25; clickedMesh = null; }
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+// Filter chips
+document.querySelectorAll('#filter-profile .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    const val = chip.dataset.val;
+    if (chip.classList.contains('active')) activeFilters.profile.add(val);
+    else activeFilters.profile.delete(val);
+    buildPoints();
+  });
+});
+document.querySelectorAll('#filter-sustain .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    const val = chip.dataset.val;
+    if (chip.classList.contains('active')) activeFilters.sustain.add(val);
+    else activeFilters.sustain.delete(val);
+    buildPoints();
+  });
+});
+
+// Search
+document.getElementById('search').addEventListener('input', e => {
+  searchTerm = e.target.value.toLowerCase().trim();
+  buildPoints();
+});
+
+// Point size
+document.getElementById('pt-size').addEventListener('input', e => {
+  ptSize = parseFloat(e.target.value);
+  buildPoints();
+});
+
+// Labels toggle
+document.getElementById('btn-labels').addEventListener('click', function() {
+  showLabels = !showLabels;
+  this.classList.toggle('active', showLabels);
+  buildPoints();
+});
+
+// Axes toggle
+let showAxes = true;
+document.getElementById('btn-axes').addEventListener('click', function() {
+  showAxes = !showAxes;
+  axisGroup.visible = showAxes;
+  this.classList.toggle('active', showAxes);
+});
+
+// Reset
+document.getElementById('btn-reset').addEventListener('click', () => {
+  spherical = { theta: 0.5, phi: 1.4, r: 8 };
+  target = new THREE.Vector3(0, -1.08, 1.0);
+  updateCamera();
+});
+
+// ── FILE LOADING ──────────────────────────────────────────────────────────────
+const fileInput = document.getElementById('file-input');
+const fileDrop = document.getElementById('file-drop');
+
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.style.borderColor = '#c9a96e'; });
+fileDrop.addEventListener('dragleave', () => { fileDrop.style.borderColor = ''; });
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.style.borderColor = '';
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      if (file.name.endsWith('.json')) {
+        DATA = JSON.parse(ev.target.result);
+      } else {
+        // CSV: id,name,x,y,z,profile,sustain,mass,variation,profile_full
+        const lines = ev.target.result.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        DATA = lines.slice(1).map(line => {
+          const vals = line.split(',');
+          const o = {};
+          headers.forEach((h, i) => o[h] = vals[i] ? vals[i].trim() : '');
+          o.id = parseInt(o.id); o.x = parseFloat(o.x); o.y = parseFloat(o.y); o.z = parseFloat(o.z);
+          return o;
+        });
+      }
+      buildPoints();
+      fileDrop.textContent = `✓ ${file.name} (${DATA.length} objects)`;
+    } catch(e) { alert('Error parsing file: ' + e.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'sound_objects.json'; a.click();
+}
+function exportCSV() {
+  const headers = ['id','name','x','y','z','profile','sustain','mass','variation','profile_full'];
+  const rows = DATA.map(o => headers.map(h => JSON.stringify(o[h] ?? '')).join(','));
+  const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'sound_objects.csv'; a.click();
+}
+
+// ── RESIZE ────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ── ANIMATE ───────────────────────────────────────────────────────────────────
+updateCamera();
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

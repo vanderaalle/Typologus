@@ -1,0 +1,73 @@
+[
+  {
+    "_reference": {
+      "profile":   ["anamorph", "eumorph", "amorph", "mixed"],
+      "sustain":   ["sustained", "impulsive", "iterative"],
+      "mass":      ["pitched mass", "fixed mass", "varied mass", "variable mass"],
+      "variation": ["no variation", "very low variation", "low variation", "medium variation", "medium-high variation", "high variation"],
+      "x_range":   "[-2.5 .. +2.5]  sustained (neg) | anamorph (0) | iterative (pos)",
+      "y_range":   "[0 .. 2.0]  0 = pitched/narrow mass, 2 = wide/noisy mass",
+      "z_range":   "[0 .. 3.0]  0 = no variation, 3 = maximum variation"
+    }
+  },
+  {
+    "id": 1,
+    "name": "",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "profile": "",
+    "sustain": "",
+    "mass": "",
+    "variation": "",
+    "profile_full": ""
+  },
+  {
+    "id": 2,
+    "name": "",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "profile": "",
+    "sustain": "",
+    "mass": "",
+    "variation": "",
+    "profile_full": ""
+  },
+  {
+    "id": 3,
+    "name": "",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "profile": "",
+    "sustain": "",
+    "mass": "",
+    "variation": "",
+    "profile_full": ""
+  },
+  {
+    "id": 4,
+    "name": "",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "profile": "",
+    "sustain": "",
+    "mass": "",
+    "variation": "",
+    "profile_full": ""
+  },
+  {
+    "id": 5,
+    "name": "",
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "profile": "",
+    "sustain": "",
+    "mass": "",
+    "variation": "",
+    "profile_full": ""
+  }
+]

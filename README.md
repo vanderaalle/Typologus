@@ -1,6 +1,6 @@
 # Typologus — Typological Space Visualizer
 
-A web-based interactive 3D visualizer for sound object typology, developed by **Andrea Valle**, based on the semiotic framework for the audible developed by Lombardo & Valle.
+A web-based interactive 3D visualizer for sound object typology based on the semiotic framework for the audible developed by **Andrea Valle**.
 
 **Live demo:** https://vanderaalle.github.io/Typologus
 

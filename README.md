@@ -32,7 +32,7 @@ Every sound object receives a unique position (x, y, z) in the space, allowing d
 
 ## Example dataset — Varèse: *Poème électronique*
 
-The example dataset (`data/sound_objects.json`) contains 60 annotated sound objects from Edgar Varèse's *Poème électronique* (1958), analyzed as part of the **VEP project** (Varèse Poème électronique).
+The example dataset (`data/sound_objects.json`) contains 123 annotated sound objects from Edgar Varèse's *Poème électronique* (1958), analyzed as part of the **VEP project** (Varèse Poème électronique).
 
 Full project documentation, score, and audio materials:
 
@@ -151,7 +151,7 @@ Typologus/
 ├── plot_typological_space.py         # Publication-quality PDF figures
 ├── README.md
 └── data/
-    ├── sound_objects.json            # Varèse: Poème électronique (60 objects)
+    ├── sound_objects.json            # Varèse: Poème électronique (123 objects)
     ├── sound_objects_template.json   # Blank annotation template
     └── sound_objects_template.csv    # Blank annotation template (CSV)
 ```

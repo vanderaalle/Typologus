@@ -107,17 +107,17 @@ Use the templates in `data/` as a starting point:
 
 ## Publication-quality figures
 
-The Python script `scripts/plot_typological_space.py` generates vectorial PDF figures (matplotlib, 300 dpi) suitable for publication.
+The Python script `plot_typological_space.py` generates vectorial PDF figures (matplotlib, 300 dpi) suitable for publication.
 
 ```bash
 # Install dependencies
 pip install matplotlib numpy
 
 # Run with built-in dataset
-python scripts/plot_typological_space.py
+python plot_typological_space.py
 
 # Run with custom dataset
-python scripts/plot_typological_space.py mydata.json
+python plot_typological_space.py mydata.json
 ```
 
 Outputs:
@@ -132,13 +132,12 @@ Outputs:
 ```
 Typologus/
 ├── index.html                        # Interactive 3D visualizer
+├── plot_typological_space.py         # Publication-quality PDF figures
 ├── README.md
-├── data/
-│   ├── sound_objects.json            # Varèse: Poème électronique (60 objects)
-│   ├── sound_objects_template.json   # Blank annotation template
-│   └── sound_objects_template.csv    # Blank annotation template (CSV)
-└── scripts/
-    └── plot_typological_space.py     # Publication-quality PDF figures
+└── data/
+    ├── sound_objects.json            # Varèse: Poème électronique (60 objects)
+    ├── sound_objects_template.json   # Blank annotation template
+    └── sound_objects_template.csv    # Blank annotation template (CSV)
 ```
 
 ---

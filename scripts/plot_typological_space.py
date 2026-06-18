@@ -234,3 +234,41 @@ if __name__ == "__main__":
     plot_3d(data,       out / "typological_space_3d.pdf",       show_labels=True)
     plot_overview(data, out / "typological_space_overview.pdf",  show_labels=True)
     print("Done.")
+
+# ── Plot individual panels ────────────────────────────────────────────────────
+def plot_single_3d(data, out_path, elev=20, azim=230, show_labels=True):
+    fig = plt.figure(figsize=(7, 6), facecolor="white")
+    ax  = fig.add_subplot(111, projection="3d")
+    style_3d(ax)
+    scatter3d(ax, data, labels=show_labels)
+    set_3d_axes(ax)
+    ax.view_init(elev=elev, azim=azim)
+    ph, sh = make_legend_handles()
+    leg1 = ax.legend(handles=ph, title="Profile", loc="upper left",
+                     fontsize=6, title_fontsize=7, framealpha=0.9, edgecolor="#ccc")
+    ax.add_artist(leg1)
+    ax.legend(handles=sh, title="Sustain", loc="upper right",
+              fontsize=6, title_fontsize=7, framealpha=0.9, edgecolor="#ccc")
+    ax.set_title(f"3D view   N={len(data)}", fontsize=8, pad=10)
+    fig.savefig(out_path, facecolor="white", bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {out_path}")
+
+def plot_single_2d(data, xkey, ykey, xlabel, ylabel, title, out_path,
+                   invert_y=False, show_labels=True):
+    fig, ax = plt.subplots(figsize=(7, 5), facecolor="white")
+    style_2d(ax)
+    scatter2d(ax, data, xkey, ykey, labels=show_labels)
+    if invert_y:
+        ax.invert_yaxis()
+    if xkey == "x":
+        ax.set_xticks(X_TICKS); ax.set_xticklabels(X_LABELS, fontsize=5)
+    ax.set_xlabel(xlabel, fontsize=8)
+    ax.set_ylabel(ylabel, fontsize=8)
+    ax.set_title(title + f"   N={len(data)}", fontsize=8)
+    ph, sh = make_legend_handles()
+    ax.legend(handles=ph + sh, fontsize=6, ncol=2, framealpha=0.9,
+              edgecolor="#ccc", title="Profile · Sustain", title_fontsize=6)
+    fig.savefig(out_path, facecolor="white", bbox_inches="tight")
+    plt.close(fig)
+    print(f"  → {out_path}")

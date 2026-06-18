@@ -1,6 +1,6 @@
 # Typologus — Typological Space Visualizer
 
-A web-based interactive 3D visualizer for sound object typology, based on the semiotic framework for the audible developed by Lombardo & Valle.
+A web-based interactive 3D visualizer for sound object typology, developed by **Andrea Valle**, based on the semiotic framework for the audible developed by Lombardo & Valle.
 
 **Live demo:** https://vanderaalle.github.io/Typologus
 
@@ -26,7 +26,7 @@ Every sound object receives a unique position (x, y, z) in the space, allowing d
 
 - Lombardo, V. & Valle, A. (2024). *Audio e Multimedia* (5th ed.). Apogeo, Milan.
 
-- Lombardo, V. & Valle, A. (2014). Typological space for sound objects. [internal reference]
+- Valle, A. (2015). Schaeffer Reconsidered: A Typological Space and Its Analytic Applications. *Analitica. Rivista online di studi musicali*, 8(1). https://lnx.gatm.it/analiticaojs/index.php/analitica/article/view/87
 
 ---
 

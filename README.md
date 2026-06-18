@@ -107,23 +107,39 @@ Use the templates in `data/` as a starting point:
 
 ## Publication-quality figures
 
-The Python script `plot_typological_space.py` generates vectorial PDF figures (matplotlib, 300 dpi) suitable for publication.
+The Python script `plot_typological_space.py` generates vectorial PDF figures (matplotlib, 300 dpi) suitable for publication. Axis orientation matches Lombardo & Valle (2014), Figura 10.11.
 
 ```bash
 # Install dependencies
 pip install matplotlib numpy
 
-# Run with built-in dataset
+# Run with built-in dataset (sound_objects.json in the same folder)
 python plot_typological_space.py
 
-# Run with custom dataset
+# Run with a custom dataset
 python plot_typological_space.py mydata.json
 ```
 
-Outputs:
+### Outputs
 
-- `typological_space_3d.pdf` — 3D scatter plot
-- `typological_space_overview.pdf` — 3D view + 3 two-dimensional projections
+| File | Description |
+|------|-------------|
+| `typological_space_3d.pdf` | Single 3D scatter plot (8 × 6 in) |
+| `typological_space_overview.pdf` | 2 × 2 grid: 3D view + 3 two-dimensional projections (profile × variation, profile × calibre, variation × calibre) |
+
+### Visual encoding
+
+| Channel | Dimension | Values |
+|---------|-----------|--------|
+| **Colour** | Profile | blue = anamorph · orange = eumorph · red = amorph · green = mixed |
+| **Marker shape** | Sustain | ● circle = sustained · ▲ triangle = impulsive · ■ square = iterative |
+
+### Advanced use
+
+The script also exposes lower-level functions for generating individual panels:
+
+- `plot_single_3d(data, out_path, elev, azim, show_labels)` — single 3D view with configurable camera
+- `plot_single_2d(data, xkey, ykey, xlabel, ylabel, title, out_path, invert_y, show_labels)` — any two-dimensional projection
 
 ---
 

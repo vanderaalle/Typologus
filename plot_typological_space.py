@@ -81,10 +81,10 @@ def set_3d_axes(ax):
     ax.set_xticks(X_TICKS);  ax.set_xticklabels(X_LABELS, fontsize=5)
     ax.set_yticks(Z_TICKS)
     ax.set_zticks(Y_TICKS)
-    ax.invert_zaxis()          # calibre: 0 at top, 2 at bottom
+    ax.invert_zaxis()          # calibre: 0 at top, 2 at bottom (matches HTML density)
     ax.set_xlabel("Profile / Sustain", labelpad=6,  fontsize=8)
     ax.set_ylabel("Variation",         labelpad=4,  fontsize=8)
-    ax.set_zlabel("Calibre",           labelpad=4,  fontsize=8)
+    ax.set_zlabel("Calibre",           labelpad=6,  fontsize=8)
 
 def style_2d(ax):
     ax.set_facecolor("white")
@@ -136,7 +136,7 @@ def scatter2d(ax, data, xkey, ykey, size=MS*0.7, alpha=0.85, labels=False):
                             xytext=(3,3), textcoords="offset points")
 
 # ── Plot 1: standalone 3D ─────────────────────────────────────────────────────
-def plot_3d(data, out_path, elev=20, azim=230, show_labels=True):
+def plot_3d(data, out_path, elev=15, azim=195, show_labels=True):
     """
     elev=25, azim=230 gives a front-left-above view matching Figura 10.11:
     - X axis (profile/sustain) runs left→right
@@ -149,6 +149,7 @@ def plot_3d(data, out_path, elev=20, azim=230, show_labels=True):
     scatter3d(ax, data, labels=show_labels)
     set_3d_axes(ax)
     ax.view_init(elev=elev, azim=azim)
+    ax.set_box_aspect(None, zoom=1.3)
 
     ph, sh = make_legend_handles()
     leg1 = ax.legend(handles=ph, title="Profile", loc="upper left",
@@ -163,12 +164,13 @@ def plot_3d(data, out_path, elev=20, azim=230, show_labels=True):
         f"(Lombardo & Valle 2014)   N = {len(data)}",
         fontsize=8, pad=10, color="#222"
     )
-    fig.savefig(out_path, facecolor="white", bbox_inches="tight")
+    fig.subplots_adjust(left=0.12, right=0.95, top=0.88, bottom=0.08)
+    fig.savefig(out_path, facecolor="white")
     plt.close(fig)
     print(f"  → {out_path}")
 
 # ── Plot 2: overview 2×2 ─────────────────────────────────────────────────────
-def plot_overview(data, out_path, elev=20, azim=230, show_labels=True):
+def plot_overview(data, out_path, elev=15, azim=195, show_labels=True):
     fig = plt.figure(figsize=(12, 9), facecolor="white")
 
     ax3d = fig.add_subplot(2, 2, 1, projection="3d")
@@ -181,6 +183,7 @@ def plot_overview(data, out_path, elev=20, azim=230, show_labels=True):
     scatter3d(ax3d, data, size=25, labels=show_labels)
     set_3d_axes(ax3d)
     ax3d.view_init(elev=elev, azim=azim)
+    ax3d.set_box_aspect(None, zoom=1.25)
     ax3d.set_title("3D view", fontsize=8)
 
     # XY — profile × variation
@@ -236,13 +239,14 @@ if __name__ == "__main__":
     print("Done.")
 
 # ── Plot individual panels ────────────────────────────────────────────────────
-def plot_single_3d(data, out_path, elev=20, azim=230, show_labels=True):
+def plot_single_3d(data, out_path, elev=15, azim=195, show_labels=True):
     fig = plt.figure(figsize=(7, 6), facecolor="white")
     ax  = fig.add_subplot(111, projection="3d")
     style_3d(ax)
     scatter3d(ax, data, labels=show_labels)
     set_3d_axes(ax)
     ax.view_init(elev=elev, azim=azim)
+    ax.set_box_aspect(None, zoom=1.3)
     ph, sh = make_legend_handles()
     leg1 = ax.legend(handles=ph, title="Profile", loc="upper left",
                      fontsize=6, title_fontsize=7, framealpha=0.9, edgecolor="#ccc")
@@ -250,7 +254,8 @@ def plot_single_3d(data, out_path, elev=20, azim=230, show_labels=True):
     ax.legend(handles=sh, title="Sustain", loc="upper right",
               fontsize=6, title_fontsize=7, framealpha=0.9, edgecolor="#ccc")
     ax.set_title(f"3D view   N={len(data)}", fontsize=8, pad=10)
-    fig.savefig(out_path, facecolor="white", bbox_inches="tight")
+    fig.subplots_adjust(left=0.12, right=0.95, top=0.92, bottom=0.08)
+    fig.savefig(out_path, facecolor="white")
     plt.close(fig)
     print(f"  → {out_path}")
 
